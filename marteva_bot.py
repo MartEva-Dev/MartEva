@@ -145,8 +145,6 @@ async def ask(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
 async def inbox(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     try:
-     import os, json
-from google.oauth2.credentials import Credentials
 def get_gmail_creds():
     creds_json = os.environ.get("GMAIL_TOKEN")
     if not creds_json:
