@@ -145,19 +145,19 @@ async def ask(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
 async def inbox(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     try:
-        results = gmail_service.users().messages().list(userId="me", q="is:unread", maxResults=5).execute()
-        messages = results.get("messages", [])
-        if not messages:
-            await update.message.reply_text("📭 Inbox is empty.")
-            return
-        reply = "📧 *Unread emails:*\n\n"
-        for m in messages:
-            msg = gmail_service.users().messages().get(userId="me", id=m["id"], format="metadata", metadataHeaders=["Subject", "From"]).execute()
-            headers = {h["name"]: h["value"] for h in msg["payload"]["headers"]}
-            reply += f"• *{headers.get('Subject', '(no subject)')}*\n  from {headers.get('From', 'unknown')}\n\n"
-        await update.message.reply_text(reply, parse_mode="Markdown")
-    except Exception as e:
-        await update.message.reply_text(f"❌ Gmail error: {e}")
+     import os, json
+from google.oauth2.credentials import Credentials
+
+def get_gmail_creds():
+    creds_json = os.environ.get("GMAIL_TOKEN")
+    if not creds_json:
+        raise RuntimeError("GMAIL_TOKEN not set in Railway")
+    creds_dict = json.loads(creds_json)
+    creds = Credentials.from_authorized_user_info(
+        creds_dict,
+        scopes=["https://www.googleapis.com/auth/gmail.readonly"]
+    )
+    return creds
 
 async def today(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     try:
