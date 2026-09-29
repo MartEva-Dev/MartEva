@@ -40,10 +40,17 @@ def init_db():
     conn.close()
 
 # --- GOOGLE ---
+import json
+from google.oauth2 import service_account
+
 def get_google_creds():
-    if not os.path.exists("token.json"):
-        raise FileNotFoundError("token.json missing. Run auth_local.py locally first.")
-    return Credentials.from_authorized_user_file("token.json", GOOGLE_SCOPES)
+    creds_json = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+    if not creds_json:
+        raise RuntimeError("GOOGLE_APPLICATION_CREDENTIALS not set in Railway")
+
+    creds_dict = json.loads(creds_json)
+    creds = service_account.Credentials.from_service_account_info(creds_dict, scopes=GOOGLE_SCOPES)
+    return creds
 
 creds = get_google_creds()
 calendar_service = build("calendar", "v3", credentials=creds)
