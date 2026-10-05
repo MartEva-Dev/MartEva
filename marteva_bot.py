@@ -56,12 +56,12 @@ def get_gmail_creds():
     if not creds_json:
         raise RuntimeError("GMAIL_TOKEN not set in Railway")
     creds_dict = json.loads(creds_json)
-        creds = Credentials.from_authorized_user_info(
-    creds_dict,
-    scopes=[
-    "https://www.googleapis.com/auth/gmail.readonly",
-    "https://www.googleapis.com/auth/calendar"
-    ]
+    creds = Credentials.from_authorized_user_info(
+        creds_dict,
+        scopes=[
+            "https://www.googleapis.com/auth/gmail.readonly",
+            "https://www.googleapis.com/auth/calendar"
+        ]
     )
     return creds
 creds = get_gmail_creds()
