@@ -48,13 +48,25 @@ def get_google_creds():
     if not creds_json:
         raise RuntimeError("GOOGLE_APPLICATION_CREDENTIALS not set in Railway")
 
-    creds_dict = json.loads(creds_json)
-    creds = service_account.Credentials.from_service_account_info(creds_dict, scopes=GOOGLE_SCOPES)
-    return creds
+import os, json
+from google.oauth2.credentials import Credentials
 
-creds = get_google_creds()
-calendar_service = build("calendar", "v3", credentials=creds)
+def get_gmail_creds():
+    creds_json = os.environ.get("GMAIL_TOKEN")
+    if not creds_json:
+        raise RuntimeError("GMAIL_TOKEN not set in Railway")
+    creds_dict = json.loads(creds_json)
+   creds = Credentials.from_authorized_user_info(
+    creds_dict,
+    scopes=[
+        "https://www.googleapis.com/auth/gmail.readonly",
+        "https://www.googleapis.com/auth/calendar"
+    ]
+    )
+    return creds
+creds = get_gmail_creds()
 gmail_service = build("gmail", "v1", credentials=creds)
+calendar_service = build("calendar", "v3", credentials=creds)
 ai_client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
 SYSTEM_PROMPT = """You are MartEva, Muchai's personal study and work assistant.
