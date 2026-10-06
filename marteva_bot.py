@@ -59,7 +59,7 @@ def get_gmail_creds():
     creds = Credentials.from_authorized_user_info(
         creds_dict,
         scopes=[
-            "https://www.googleapis.com/auth/gmail.readonly",
+            "https://www.googleapis.com/auth/gmail.modify",
             "https://www.googleapis.com/auth/calendar"
         ]
     )
@@ -68,6 +68,55 @@ creds = get_gmail_creds()
 gmail_service = build("gmail", "v1", credentials=creds)
 calendar_service = build("calendar", "v3", credentials=creds)
 ai_client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+import base64
+
+def get_body(msg):
+    if 'parts' in msg['payload']:
+        for part in msg['payload']['parts']:
+            if part['mimeType'] == 'text/plain':
+                data = part['body']['data']
+                return base64.urlsafe_b64decode(data).decode('utf-8')
+    else:
+        data = msg['payload']['body']['data']
+        return base64.urlsafe_b64decode(data).decode('utf-8')
+    return ""
+
+def summarize_email(text):
+    prompt = f"Summarize this email in 2 sentences:\n\n{text}"
+    response = ai_client.completions.create(
+        model="claude-3-opus-20240229",
+        max_tokens=200,
+        prompt=prompt
+    )
+    return response.completion.strip()
+
+def mark_as_read(message_id):
+    gmail_service.users().messages().modify(
+        userId='me',
+        id=message_id,
+        body={'removeLabelIds': ['UNREAD']}
+    ).execute()
+def fetch_and_summarize():
+    results = gmail_service.users().messages().list(userId='me', labelIds=['UNREAD']).execute()
+    messages = results.get('messages', [])
+    summaries = []
+
+    for message in messages:
+        msg = gmail_service.users().messages().get(userId='me', id=message['id']).execute()
+        subject = next(h['value'] for h in msg['payload']['headers'] if h['name'] == 'Subject')
+        body = get_body(msg)
+        summary = summarize_email(body)
+        summaries.append(f"📧 {subject}: {summary}")
+
+        # ✅ Mark email as read
+        mark_as_read(message['id'])
+
+    return summaries
+
+if __name__ == "__main__":
+    summaries = fetch_and_summarize()
+    for s in summaries:
+        print(s)
 
 SYSTEM_PROMPT = """You are MartEva, Muchai's personal study and work assistant.
 Context: Muchai is doing an MBA (Finance) and works as an Audit Assistant in Nairobi, Kenya.
