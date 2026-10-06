@@ -83,7 +83,7 @@ def get_body(msg):
 
 def summarize_email(text):
     response = ai_client.messages.create(
-        model="claude-3-5-haiku",
+        model="claude-haiku-4-5-20251001",
         max_tokens=200,
         messages=[
             {"role": "user", "content": f"Summarize this email in 2 sentences:\n\n{text}"}
