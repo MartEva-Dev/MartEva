@@ -82,13 +82,14 @@ def get_body(msg):
     return ""
 
 def summarize_email(text):
-    prompt = f"Summarize this email in 2 sentences:\n\n{text}"
-    response = ai_client.completions.create(
-        model="claude-3-opus-20240229",
-         max_tokens_to_sample=200,
-        prompt=prompt
+    response = ai_client.messages.create(
+        model="claude-3-opus-20240229",   # or another Claude 3 model
+        max_tokens=200,                   # ✅ correct for messages API
+        messages=[
+            {"role": "user", "content": f"Summarize this email in 2 sentences:\n\n{text}"}
+        ]
     )
-    return response.completion.strip()
+    return response.content[0].text.strip()
     
 def fetch_and_summarize():
     results = gmail_service.users().messages().list(userId='me', labelIds=['UNREAD']).execute()
