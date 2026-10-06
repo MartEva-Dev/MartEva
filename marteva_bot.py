@@ -59,7 +59,7 @@ def get_gmail_creds():
     creds = Credentials.from_authorized_user_info(
         creds_dict,
         scopes=[
-            "https://www.googleapis.com/auth/gmail.modify",
+            "https://www.googleapis.com/auth/gmail.readonly",
             "https://www.googleapis.com/auth/calendar"
         ]
     )
@@ -89,13 +89,7 @@ def summarize_email(text):
         prompt=prompt
     )
     return response.completion.strip()
-
-def mark_as_read(message_id):
-    gmail_service.users().messages().modify(
-        userId='me',
-        id=message_id,
-        body={'removeLabelIds': ['UNREAD']}
-    ).execute()
+    
 def fetch_and_summarize():
     results = gmail_service.users().messages().list(userId='me', labelIds=['UNREAD']).execute()
     messages = results.get('messages', [])
@@ -107,9 +101,6 @@ def fetch_and_summarize():
         body = get_body(msg)
         summary = summarize_email(body)
         summaries.append(f"📧 {subject}: {summary}")
-
-        # ✅ Mark email as read
-        mark_as_read(message['id'])
 
     return summaries
 
