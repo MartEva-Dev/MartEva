@@ -85,7 +85,7 @@ def summarize_email(text):
     prompt = f"Summarize this email in 2 sentences:\n\n{text}"
     response = ai_client.completions.create(
         model="claude-3-opus-20240229",
-        max_tokens=200,
+         max_tokens_to_sample=200,
         prompt=prompt
     )
     return response.completion.strip()
