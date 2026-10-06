@@ -198,19 +198,59 @@ async def ask(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
 async def inbox(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     try:
-        results = gmail_service.users().messages().list(userId="me", q="is:unread", maxResults=5).execute()
+        results = gmail_service.users().messages().list(
+            userId="me",
+            q="is:unread",
+            maxResults=5
+        ).execute()
+
         messages = results.get("messages", [])
+
         if not messages:
             await update.message.reply_text("📭 Inbox is empty.")
             return
+
         reply = "📧 *Unread emails:*\n\n"
-        for m in messages:
-            msg = gmail_service.users().messages().get(userId="me", id=m["id"], format="metadata", metadataHeaders=["Subject", "From"]).execute()
-            headers = {h["name"]: h["value"] for h in msg["payload"]["headers"]}
-            reply += f"• *{headers.get('Subject', '(no subject)')}*\n  from {headers.get('From', 'unknown')}\n\n"
-        await update.message.reply_text(reply, parse_mode="Markdown")
+
+        for i, m in enumerate(messages, 1):
+
+            # Get the full email
+            msg = gmail_service.users().messages().get(
+                userId="me",
+                id=m["id"],
+                format="full"
+            ).execute()
+
+            # Get subject and sender
+            headers = {
+                h["name"]: h["value"]
+                for h in msg["payload"]["headers"]
+            }
+
+            subject = headers.get("Subject", "(no subject)")
+            sender = headers.get("From", "unknown")
+
+            # Extract email body
+            body = get_body(msg)
+
+            # Summarize email
+            summary = summarize_email(body)
+
+            reply += (
+                f"*{i}. {subject}*\n"
+                f"From: {sender}\n"
+                f"📝 {summary}\n\n"
+            )
+
+        await update.message.reply_text(
+            reply,
+            parse_mode="Markdown"
+        )
+
     except Exception as e:
-        await update.message.reply_text(f"❌ Gmail error: {e}")
+        await update.message.reply_text(
+            f"❌ Gmail/AI error: {e}"
+        )
 
 async def today(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     try:
